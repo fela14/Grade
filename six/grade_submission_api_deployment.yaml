@@ -23,11 +23,23 @@ spec:
       containers:
         - name: grade-submission-api
           image: rslim087/kubernetes-course-grade-submission-api:stateless
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 3001
+            initialDelaySeconds: 15
+            periodSeconds: 5
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: 3001
+            initialDelaySeconds: 15
+            periodSeconds: 5
           resources:
             requests: 
-              memory: "128Mi"
+              memory: "256Mi"
               cpu: "128m"
             limits:
-              memory: "128Mi"
+              memory: "512Mi"
           ports:
             - containerPort: 3001

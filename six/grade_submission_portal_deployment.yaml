@@ -18,6 +18,18 @@ spec:
       containers:
         - name: grade-submission-portal
           image: rslim087/kubernetes-course-grade-submission-portal
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 5001
+            initialDelaySeconds: 15
+            periodSeconds: 5
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: 5001
+            initialDelaySeconds: 15
+            periodSeconds: 5
           env:
             - name: GRADE_SERVICE_HOST
               value: grade-submission-api
