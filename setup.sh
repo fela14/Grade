@@ -181,3 +181,47 @@ Troubleshooting / Notes:
 NOTES
 
 exit 0
+
+
+#=====================================
+# Metric-server Installation
+#=====================================
+#!/bin/bash
+
+set -o errexit
+set -o pipefail
+
+METRICS_VERSION="v0.8.0"
+NAMESPACE="kube-system"
+
+echo "Installing Metrics Server ${METRICS_VERSION} for kind/Codespaces..."
+
+# Apply official manifests
+kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/download/${METRICS_VERSION}/components.yaml
+
+# Patch for kind/self-signed TLS + correct node IPs
+kubectl -n ${NAMESPACE} patch deployment metrics-server \
+  --type='json' \
+  -p='[{"op":"add","path":"/spec/template/spec/containers/0/args/-","value":"--kubelet-insecure-tls"},{"op":"add","path":"/spec/template/spec/containers/0/args/-","value":"--kubelet-preferred-address-types=InternalIP,ExternalIP,Hostname"}]'
+
+# Wait until pod is ready
+echo "Waiting for Metrics Server pod to be ready..."
+kubectl -n ${NAMESPACE} wait --for=condition=available deployment metrics-server --timeout=60s
+
+# Give the API a few seconds to start serving metrics
+echo "Pausing 10 seconds to allow Metrics Server API to start..."
+sleep 10
+
+# Test Metrics API
+echo "Testing Metrics API:"
+kubectl top nodes
+kubectl top pods --all-namespaces
+
+echo "✅ Metrics Server installed and running!"
+
+
+#=====================================
+# NGINX ingress controller Installation
+#=====================================
+#!/bin/bash
+kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.8.2/deploy/static/provider/cloud/deploy.yaml
